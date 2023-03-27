@@ -1,34 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
+import Board from './components/Board/Board'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const emojiList = [...'💣🧤🎩🌮🎱🌶🍕🦖']
+
+const App = () => {
+  const [shuffledMemoBlocks, setShuffledMemoBlocks] = useState([])
+  const [selectedMemoBlock, setSelectedMemoBlock] = useState(null)
+  const [animating, setAnimating] = useState(false)
+
+  useEffect(() => {
+    const shuffledEmojiList = shuffleArray([...emojiList, ...emojiList])
+    setShuffledMemoBlocks(shuffledEmojiList.map((emoji, i) => ({ index: i, emoji, flipped: false})))
+  }, [])
+
+  function shuffleArray(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a
+  }
+
+  const handleMemoClick = memoBlock => {
+    const flippedMemoBlock = {...memoBlock, flipped: true}
+    let shuffledMemoBlocksCopy = [ ...shuffledMemoBlocks]
+    shuffledMemoBlocksCopy.splice(memoBlock.index, 1, flippedMemoBlock)
+    setShuffledMemoBlocks(shuffledMemoBlocksCopy)
+    if(selectedMemoBlock === null) {
+      setSelectedMemoBlock(memoBlock)
+    } else if(selectedMemoBlock.emoji === memoBlock.emoji) {
+      setSelectedMemoBlock(null)
+    } else {
+      setAnimating(true)
+      setTimeout(() => {
+        shuffledMemoBlocksCopy.splice(memoBlock.index, 1, memoBlock)
+        shuffledMemoBlocksCopy.splice(selectedMemoBlock.index, 1, selectedMemoBlock)
+        setShuffledMemoBlocks(shuffledMemoBlocksCopy)
+        setSelectedMemoBlock(null)
+        setAnimating(false)
+      }, 1000)
+    }
+  }
 
   return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
+    <Board memoBlocks={shuffledMemoBlocks} animating={animating} handleMemoClick={handleMemoClick}/>
   )
 }
 
